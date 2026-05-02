@@ -131,6 +131,16 @@ body {
   transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
+.field input.gerente,
+.inline-group input.gerente {
+  background: beige;
+}
+
+.field input.sistema,
+.inline-group input.sistema {
+  background: #c8f1c8;
+}
+
 .field input:focus,
 .inline-group input:focus {
   outline: none;

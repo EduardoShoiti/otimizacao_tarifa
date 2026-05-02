@@ -21,7 +21,7 @@
       <section class="screen-section form-section">
         <section class="hero">
           <span class="eyebrow">Simulador visual para apresentação</span>
-          <h1>Comparativo entre a lógica atual e a proposta de tarifa</h1>
+          <h1>Lógica Atual X Proposta</h1>
           <p>
             Preencha um cenário base, gere automaticamente mais quatro cenários derivados
             com duplicação da nova quantidade de boletos e veja o impacto em desconto,
@@ -32,47 +32,52 @@
         <section class="control-panel">
           <form id="simulation-form">
             <div class="control-grid">
+
               <div class="field-stack">
+
                 <div class="field">
                   <label for="qtd_boleto_atual">Qtd atual boleto</label>
-                  <input id="qtd_boleto_atual" name="qtd_boleto_atual" type="number" min="1" step="1" value="100" required />
+                  <input id="qtd_boleto_atual" name="qtd_boleto_atual" class="gerente" type="number" min="1" step="1" value="100" required />
                 </div>
 
-                <div class="field">
-                  <label for="qtd_evento_atual">Qtd evento tarifado histórico</label>
-                  <input id="qtd_evento_atual" name="qtd_evento_atual" type="number" min="1" step="1" value="100" required />
-                </div>
-
-                <div class="field">
-                  <label for="tarifa_atual">Tarifa atual</label>
-                  <input id="tarifa_atual" name="tarifa_atual" type="number" min="0.01" step="0.01" value="5.00" required />
-                </div>
-              </div>
-
-              <div class="field-stack">
                 <div class="field">
                   <label for="qtd_boleto_nova">Qtd nova boleto</label>
-                  <input id="qtd_boleto_nova" name="qtd_boleto_nova" type="number" min="1" step="1" value="200" required />
+                  <input id="qtd_boleto_nova" name="qtd_boleto_nova" class="gerente" type="number" min="1" step="1" value="200" required />
                 </div>
 
                 <div class="field">
                   <label for="valor_invest_facil_extra">Invest Fácil extra</label>
-                  <input id="valor_invest_facil_extra" name="valor_invest_facil_extra" type="number" min="0" step="0.01" value="8000" required />
+                  <input id="valor_invest_facil_extra" name="valor_invest_facil_extra" class="gerente" type="number" min="0" step="0.01" value="8000" required />
                 </div>
+                
+              </div>
+
+              <div class="field-stack">
+
+                <div class="field">
+                  <label for="qtd_evento_atual">Qtd evento tarifado histórico</label>
+                  <input id="qtd_evento_atual" name="qtd_evento_atual" class="sistema" type="number" min="1" step="1" value="100" required />
+                </div>
+
+                <div class="field">
+                  <label for="tarifa_atual">Tarifa atual</label>
+                  <input id="tarifa_atual" name="tarifa_atual" class="sistema" type="number" min="0.01" step="0.01" value="5.00" required />
+                </div>
+
 
                 <div class="inline-group">
                   <div class="inline-inputs">
                     <div class="mini-field">
                       <label for="margem_fixa">Margem fixa</label>
-                      <input id="margem_fixa" name="margem_fixa" type="number" min="0" step="0.01" value="0.20" required />
+                      <input id="margem_fixa" name="margem_fixa" class="sistema" type="number" min="0" step="0.01" value="0.20" required />
                     </div>
                     <div class="mini-field">
                       <label for="alpha">α</label>
-                      <input id="alpha" name="alpha" type="number" min="0" step="0.01" value="0.20" required />
+                      <input id="alpha" name="alpha" class="sistema" type="number" min="0" step="0.01" value="0.20" required />
                     </div>
                     <div class="mini-field">
                       <label for="beta">β</label>
-                      <input id="beta" name="beta" type="number" min="0" step="0.01" value="1.50" required />
+                      <input id="beta" name="beta" class="sistema" type="number" min="0" step="0.01" value="1.50" required />
                     </div>
                   </div>
                 </div>
@@ -96,7 +101,7 @@
               <span>🔍</span>
               <div class="info-tooltip">
                 <!-- Ajuste aqui o texto explicativo do racional do cenário atual -->
-                A lógica atual parte da tarifa vigente e aplica uma margem fixa. Depois, compara as contrapartidas possíveis e escolhe a opção que entrega o maior desconto sem perder a receita alvo.
+                A lógica atual parte da receita atual e aplica uma margem fixa. Depois, compara as contrapartidas possíveis e escolhe a opção que entrega o maior desconto sem perder a receita alvo.
               </div>
             </div>
           </div>
