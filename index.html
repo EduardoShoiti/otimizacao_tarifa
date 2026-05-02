@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulador de Tarifa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="screen-section form-section">
+        <section class="hero">
+          <span class="eyebrow">Simulador visual para apresentação</span>
+          <h1>Comparativo entre a lógica atual e a proposta de tarifa</h1>
+          <p>
+            Preencha um cenário base, gere automaticamente mais quatro cenários derivados
+            com duplicação da nova quantidade de boletos e veja o impacto em desconto,
+            margem e tarifa negociada.
+          </p>
+        </section>
+
+        <section class="control-panel">
+          <form id="simulation-form">
+            <div class="control-grid">
+              <div class="field-stack">
+                <div class="field">
+                  <label for="qtd_boleto_atual">Qtd atual boleto</label>
+                  <input id="qtd_boleto_atual" name="qtd_boleto_atual" type="number" min="1" step="1" value="100" required />
+                </div>
+
+                <div class="field">
+                  <label for="qtd_evento_atual">Qtd evento tarifado histórico</label>
+                  <input id="qtd_evento_atual" name="qtd_evento_atual" type="number" min="1" step="1" value="100" required />
+                </div>
+
+                <div class="field">
+                  <label for="tarifa_atual">Tarifa atual</label>
+                  <input id="tarifa_atual" name="tarifa_atual" type="number" min="0.01" step="0.01" value="5.00" required />
+                </div>
+              </div>
+
+              <div class="field-stack">
+                <div class="field">
+                  <label for="qtd_boleto_nova">Qtd nova boleto</label>
+                  <input id="qtd_boleto_nova" name="qtd_boleto_nova" type="number" min="1" step="1" value="200" required />
+                </div>
+
+                <div class="field">
+                  <label for="valor_invest_facil_extra">Invest Fácil extra</label>
+                  <input id="valor_invest_facil_extra" name="valor_invest_facil_extra" type="number" min="0" step="0.01" value="8000" required />
+                </div>
+
+                <div class="inline-group">
+                  <div class="inline-inputs">
+                    <div class="mini-field">
+                      <label for="margem_fixa">Margem fixa</label>
+                      <input id="margem_fixa" name="margem_fixa" type="number" min="0" step="0.01" value="0.20" required />
+                    </div>
+                    <div class="mini-field">
+                      <label for="alpha">α</label>
+                      <input id="alpha" name="alpha" type="number" min="0" step="0.01" value="0.20" required />
+                    </div>
+                    <div class="mini-field">
+                      <label for="beta">β</label>
+                      <input id="beta" name="beta" type="number" min="0" step="0.01" value="1.50" required />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="primary-button" type="submit">Simular</button>
+              <p id="simulation-status" class="status">Aguardando o PyScript carregar para executar a primeira simulação.</p>
+            </div>
+          </form>
+        </section>
+      </section>
+
+      <section id="results-section" class="screen-section results-section">
+      <section class="chart-section">
+        <article class="chart-block">
+          <div class="chart-heading">
+            <h2>Cenário atual</h2>
+            <div class="info-chip" tabindex="0" aria-label="Explicação da lógica atual">
+              <span>🔍</span>
+              <div class="info-tooltip">
+                <!-- Ajuste aqui o texto explicativo do racional do cenário atual -->
+                A lógica atual parte da tarifa vigente e aplica uma margem fixa. Depois, compara as contrapartidas possíveis e escolhe a opção que entrega o maior desconto sem perder a receita alvo.
+              </div>
+            </div>
+          </div>
+          <div class="chart-card">
+            <p id="current-context" class="chart-meta">
+              A simulação será preenchida automaticamente assim que a página terminar de carregar.
+            </p>
+            <div class="chart-frame">
+              <canvas id="current-chart"></canvas>
+            </div>
+          </div>
+        </article>
+
+        <aside class="premise-card">
+          <h3>Premissa analisada</h3>
+          <div id="premise-box" class="premise-grid">
+            <div class="premise-item">
+              <span>Qtd atual de boletos</span>
+              <strong>--</strong>
+            </div>
+            <div class="premise-item">
+              <span>Tarifa atual</span>
+              <strong>--</strong>
+            </div>
+            <div class="premise-item">
+              <span>Qtd nova de boletos</span>
+              <strong>--</strong>
+            </div>
+            <div class="premise-item">
+              <span>Invest Fácil extra</span>
+              <strong>--</strong>
+            </div>
+          </div>
+        </aside>
+
+        <article class="chart-block">
+          <div class="chart-heading">
+            <h2>Cenário proposta</h2>
+            <div class="info-chip" tabindex="0" aria-label="Explicação da lógica proposta">
+              <span>🔍</span>
+              <div class="info-tooltip">
+                <!-- Ajuste aqui o texto explicativo do racional do cenário proposta -->
+                A proposta busca a menor tarifa viável considerando a combinação das contrapartidas e uma margem dinâmica, que cresce conforme o desconto concedido aumenta.
+              </div>
+            </div>
+          </div>
+          <div class="chart-card">
+            <p id="proposal-context" class="chart-meta">
+              A proposta usa margem dinâmica com os parâmetros informados no formulário.
+            </p>
+            <div class="chart-frame">
+              <canvas id="proposal-chart"></canvas>
+            </div>
+          </div>
+        </article>
+      </section>
+      </section>
+    </main>
+
+    <script type="py">
+import json
+
+from js import window
+from pyodide.ffi import create_proxy
+
+
+def calcular_tarifa_boleto_logica_atual(
+    qtd_evento_atual,
+    qtd_boleto_atual,
+    tarifa_atual,
+    qtd_boleto_nova=0.0,
+    valor_invest_facil_extra=0.0,
+    rentabilidade_if=0.0074,
+    tarifa_minima=0.1,
+    margem_fixa=0.20,
+):
+    if qtd_evento_atual < 0:
+        raise ValueError("qtd_evento_atual deve ser >= 0.")
+
+    if qtd_boleto_atual < 0:
+        raise ValueError("qtd_boleto_atual deve ser >= 0.")
+
+    if qtd_boleto_atual == 0:
+        raise ValueError("qtd_boleto_atual não pode ser 0 para calcular o fator_evento.")
+
+    if tarifa_atual <= 0:
+        raise ValueError("tarifa_atual deve ser > 0.")
+
+    if qtd_boleto_nova < 0:
+        raise ValueError("qtd_boleto_nova deve ser >= 0.")
+
+    if valor_invest_facil_extra < 0:
+        raise ValueError("valor_invest_facil_extra deve ser >= 0.")
+
+    if rentabilidade_if < 0:
+        raise ValueError("rentabilidade_if deve ser >= 0.")
+
+    if tarifa_minima <= 0:
+        raise ValueError("tarifa_minima deve ser > 0.")
+
+    if margem_fixa < 0:
+        raise ValueError("margem_fixa deve ser >= 0.")
+
+    receita_atual_boleto = qtd_evento_atual * tarifa_atual
+    receita_alvo = receita_atual_boleto * (1 + margem_fixa)
+    fator_evento = min(1.0, qtd_evento_atual / qtd_boleto_atual)
+
+    qtd_evento_novo_boleto = qtd_boleto_nova * fator_evento
+    tarifa_nova_boleto = receita_alvo / qtd_evento_novo_boleto
+    tarifa_nova_boleto = max(tarifa_minima, tarifa_nova_boleto)
+    tarifa_nova_boleto = min(tarifa_atual, tarifa_nova_boleto)
+    desconto_boleto = 1 - (tarifa_nova_boleto / tarifa_atual)
+    receita_nova_boleto = qtd_evento_novo_boleto * tarifa_nova_boleto
+
+    resultado_boleto = {
+        "tipo_contrapartida": "boleto",
+        "tarifa_nova": tarifa_nova_boleto,
+        "desconto": desconto_boleto,
+        "qtd_boleto_nova": qtd_boleto_nova,
+        "qtd_evento_novo": qtd_evento_novo_boleto,
+        "valor_invest_facil_extra": 0.0,
+        "receita_incremental_if": 0.0,
+        "receita_nova_total": receita_nova_boleto,
+    }
+
+    receita_incremental_if = valor_invest_facil_extra * rentabilidade_if
+    receita_alvo_liquida_if = receita_alvo - receita_incremental_if
+    tarifa_nova_if = receita_alvo_liquida_if / qtd_evento_atual
+    tarifa_nova_if = max(tarifa_minima, tarifa_nova_if)
+    tarifa_nova_if = min(tarifa_atual, tarifa_nova_if)
+    desconto_if = 1 - (tarifa_nova_if / tarifa_atual)
+    receita_boleto_nova_if = qtd_evento_atual * tarifa_nova_if
+    receita_nova_total_if = receita_boleto_nova_if + receita_incremental_if
+
+    resultado_if = {
+        "tipo_contrapartida": "invest_facil",
+        "tarifa_nova": tarifa_nova_if,
+        "desconto": desconto_if,
+        "qtd_boleto_nova": 0.0,
+        "qtd_evento_novo": qtd_evento_atual,
+        "valor_invest_facil_extra": valor_invest_facil_extra,
+        "receita_incremental_if": receita_incremental_if,
+        "receita_nova_total": receita_nova_total_if,
+    }
+
+    if resultado_boleto["desconto"] >= resultado_if["desconto"]:
+        melhor_resultado = resultado_boleto
+    else:
+        melhor_resultado = resultado_if
+
+    return {
+        "tipo_logica": "atual_margem_fixa",
+        "tipo_contrapartida_escolhida": melhor_resultado["tipo_contrapartida"],
+        "tarifa_atual": tarifa_atual,
+        "tarifa_nova": round(float(melhor_resultado["tarifa_nova"]), 2),
+        "desconto": round(float(melhor_resultado["desconto"]), 2),
+        "margem_exigida": round(float(margem_fixa), 2),
+        "receita_nova_total": round(float(melhor_resultado["receita_nova_total"]), 2),
+    }
+
+
+def margem_dinamica(
+    desconto,
+    margem_base=0.10,
+    alpha=0.30,
+    beta=1.70,
+):
+    desconto_ajustado = max(0.0, min(1.0, desconto))
+    return margem_base + alpha * desconto_ajustado + beta * (desconto_ajustado ** 2)
+
+
+def calcular_tarifa_boleto_com_contrapartida(
+    qtd_evento_atual,
+    qtd_boleto_atual,
+    tarifa_atual,
+    qtd_boleto_nova=0.0,
+    valor_invest_facil_extra=0.0,
+    rentabilidade_if=0.0074,
+    tarifa_minima=0.1,
+    margem_base=0.20,
+    alpha=0.20,
+    beta=1.50,
+    num_passos_busca=5000,
+):
+    if qtd_evento_atual < 0:
+        raise ValueError("qtd_evento_atual deve ser >= 0.")
+
+    if qtd_boleto_atual < 0:
+        raise ValueError("qtd_boleto_atual deve ser >= 0.")
+
+    if tarifa_atual <= 0:
+        raise ValueError("tarifa_atual deve ser > 0.")
+
+    if qtd_boleto_nova < 0:
+        raise ValueError("qtd_boleto_nova deve ser >= 0.")
+
+    if valor_invest_facil_extra < 0:
+        raise ValueError("valor_invest_facil_extra deve ser >= 0.")
+
+    if rentabilidade_if < 0:
+        raise ValueError("rentabilidade_if deve ser >= 0.")
+
+    if qtd_boleto_atual == 0:
+        raise ValueError("qtd_boleto_atual não pode ser 0 para calcular o fator_evento.")
+
+    if tarifa_minima <= 0:
+        raise ValueError("tarifa_minima deve ser > 0.")
+
+    receita_atual_boleto = qtd_evento_atual * tarifa_atual
+    fator_evento = min(1.0, qtd_evento_atual / qtd_boleto_atual)
+    qtd_evento_extra = qtd_boleto_nova * fator_evento
+    receita_incremental_if = valor_invest_facil_extra * rentabilidade_if
+
+    if num_passos_busca < 2:
+        tarifas_candidatas = [tarifa_minima, tarifa_atual]
+    else:
+        passo = (tarifa_atual - tarifa_minima) / (num_passos_busca - 1)
+        tarifas_candidatas = [
+            tarifa_minima + (passo * indice)
+            for indice in range(num_passos_busca)
+        ]
+
+    melhor_resultado = None
+
+    for tarifa_candidata in tarifas_candidatas:
+        desconto = 1 - (tarifa_candidata / tarifa_atual)
+        margem_exigida = margem_dinamica(
+            desconto=desconto,
+            margem_base=margem_base,
+            alpha=alpha,
+            beta=beta,
+        )
+        receita_alvo = receita_atual_boleto * (1 + margem_exigida)
+        receita_boleto_nova = qtd_evento_extra * tarifa_candidata
+        receita_nova_total = receita_boleto_nova + receita_incremental_if
+
+        if receita_nova_total >= receita_alvo:
+            melhor_resultado = {
+                "tarifa_atual": tarifa_atual,
+                "tarifa_nova": round(float(tarifa_candidata), 2),
+                "desconto": round(float(desconto), 2),
+                "margem_exigida": round(float(margem_exigida), 2),
+                "receita_nova_total": round(float(receita_nova_total), 2),
+            }
+            break
+
+    if melhor_resultado is None:
+        margem_exigida = margem_dinamica(
+            desconto=0.0,
+            margem_base=margem_base,
+            alpha=alpha,
+            beta=beta,
+        )
+        return {
+            "tarifa_atual": tarifa_atual,
+            "tarifa_nova": tarifa_atual,
+            "desconto": 0.0,
+            "margem_exigida": round(float(margem_exigida), 2),
+            "receita_nova_total": round(float(receita_atual_boleto + receita_incremental_if), 2),
+        }
+
+    return melhor_resultado
+
+
+def gerar_cenarios(payload):
+    cenarios = []
+    qtd_boleto_nova = float(payload["qtd_boleto_nova"])
+    qtd_boleto_atual = float(payload["qtd_boleto_atual"])
+
+    cenario_base = payload.copy()
+    cenario_base["cenario"] = 0
+    cenario_base["qtd_boleto_nova"] = qtd_boleto_atual
+    cenario_base["valor_invest_facil_extra"] = 0.0
+    cenario_base["incremento_boleto"] = 0.0
+    cenarios.append(cenario_base)
+
+    for indice in range(5):
+        cenario = payload.copy()
+        cenario["cenario"] = indice + 1
+        cenario["qtd_boleto_nova"] = qtd_boleto_nova * (2 ** indice)
+        cenario["incremento_boleto"] = cenario["qtd_boleto_nova"] - qtd_boleto_atual
+        cenarios.append(cenario)
+
+    return cenarios
+
+
+def simular_cenarios(payload_json):
+    payload = json.loads(payload_json)
+    cenarios = gerar_cenarios(payload)
+    resultados_atual = []
+    resultados_proposta = []
+
+    for cenario in cenarios:
+        base_atual = calcular_tarifa_boleto_logica_atual(
+            qtd_evento_atual=cenario["qtd_evento_atual"],
+            qtd_boleto_atual=cenario["qtd_boleto_atual"],
+            tarifa_atual=cenario["tarifa_atual"],
+            qtd_boleto_nova=cenario["qtd_boleto_nova"],
+            valor_invest_facil_extra=cenario["valor_invest_facil_extra"],
+            margem_fixa=cenario["margem_fixa"],
+        )
+
+        base_proposta = calcular_tarifa_boleto_com_contrapartida(
+            qtd_evento_atual=cenario["qtd_evento_atual"],
+            qtd_boleto_atual=cenario["qtd_boleto_atual"],
+            tarifa_atual=cenario["tarifa_atual"],
+            qtd_boleto_nova=cenario["qtd_boleto_nova"],
+            valor_invest_facil_extra=cenario["valor_invest_facil_extra"],
+            margem_base=cenario["margem_fixa"],
+            alpha=cenario["alpha"],
+            beta=cenario["beta"],
+        )
+
+        if cenario["cenario"] == 0:
+            receita_base = round(float(cenario["qtd_evento_atual"] * cenario["tarifa_atual"]), 2)
+            base_atual["tarifa_nova"] = cenario["tarifa_atual"]
+            base_atual["desconto"] = 0.0
+            base_atual["margem_exigida"] = 0.0
+            base_atual["receita_nova_total"] = receita_base
+
+            base_proposta["tarifa_nova"] = cenario["tarifa_atual"]
+            base_proposta["desconto"] = 0.0
+            base_proposta["margem_exigida"] = 0.0
+            base_proposta["receita_nova_total"] = receita_base
+
+        resultados_atual.append(
+            {
+                "cenario": cenario["cenario"],
+                "qtd_boleto_nova": cenario["qtd_boleto_nova"],
+                "incremento_boleto": cenario["incremento_boleto"],
+                "tarifa_nova": base_atual["tarifa_nova"],
+                "desconto": base_atual["desconto"],
+                "margem_exigida": base_atual["margem_exigida"],
+                "receita_nova_total": base_atual["receita_nova_total"],
+                "tipo_contrapartida": base_atual["tipo_contrapartida_escolhida"],
+            }
+        )
+
+        resultados_proposta.append(
+            {
+                "cenario": cenario["cenario"],
+                "qtd_boleto_nova": cenario["qtd_boleto_nova"],
+                "incremento_boleto": cenario["incremento_boleto"],
+                "tarifa_nova": base_proposta["tarifa_nova"],
+                "desconto": base_proposta["desconto"],
+                "margem_exigida": base_proposta["margem_exigida"],
+                "receita_nova_total": base_proposta["receita_nova_total"],
+            }
+        )
+
+    return json.dumps(
+        {
+            "cenarios": cenarios,
+            "atual": resultados_atual,
+            "proposta": resultados_proposta,
+        }
+    )
+
+
+window.runTarifaSimulation = create_proxy(simular_cenarios)
+    </script>
+    <script src="./app.js"></script>
+  </body>
+</html>
