@@ -4,6 +4,10 @@ const currentContext = document.getElementById("current-context");
 const proposalContext = document.getElementById("proposal-context");
 const premiseBox = document.getElementById("premise-box");
 const resultsSection = document.getElementById("results-section");
+const currentChartPanel = document.querySelector('[data-chart-panel="current"]');
+const proposalChartPanel = document.querySelector('[data-chart-panel="proposal"]');
+const currentChartToggle = document.getElementById("toggle-current-chart");
+const proposalChartToggle = document.getElementById("toggle-proposal-chart");
 
 let currentChart;
 let proposalChart;
@@ -36,7 +40,7 @@ const chartOptions = {
           const tarifa = context.raw.tarifa_nova;
           const receita = context.raw.receita_nova_total;
 
-          return datasetLabel === "Margem"
+          return datasetLabel === "Uplift"
             ? `${datasetLabel}: ${value} | receita nova R$ ${receita.toFixed(2)}`
             : `${datasetLabel}: ${value} | tarifa nova R$ ${tarifa.toFixed(2)}`;
         },
@@ -45,7 +49,6 @@ const chartOptions = {
     datalabels: {
       align(context) {
         return context.dataset.key === "desconto" ? "bottom" : "top";
-        // return "top";
       },
       anchor: "end",
       offset: 6,
@@ -65,7 +68,7 @@ const chartOptions = {
       },
       font: {
         family: "IBM Plex Sans",
-        size: 10,
+        size: 12,
         weight: "700",
       },
     },
@@ -109,6 +112,14 @@ const chartOptions = {
       },
     },
   },
+  layout: {
+    padding: {
+      top: 18,
+      right: 110,
+      bottom: 18,
+      left: 28,
+    },
+  },
 };
 
 function formatScenarioLabel(item) {
@@ -130,11 +141,11 @@ function buildDatasets(results) {
       backgroundColor: "#e64b4b",
       borderWidth: 2,
       tension: 0.3,
-      pointRadius: 4,
-      pointHoverRadius: 5,
+      pointRadius: 3,
+      pointHoverRadius: 4,
     },
     {
-      label: "Margem",
+      label: "Uplift",
       key: "margem",
       data: results.map((item) => ({
         x: formatScenarioLabel(item),
@@ -146,8 +157,8 @@ function buildDatasets(results) {
       backgroundColor: "#7ea04d",
       borderWidth: 2,
       tension: 0.3,
-      pointRadius: 4,
-      pointHoverRadius: 5,
+      pointRadius: 3,
+      pointHoverRadius: 4,
     },
   ];
 }
@@ -214,6 +225,24 @@ function createOrUpdateChart(canvasId, chartRef, title, results, yScale) {
   });
 }
 
+function updateChartVisibility(panel, button, isCollapsed) {
+  panel.classList.toggle("is-collapsed", isCollapsed);
+  button.textContent = isCollapsed ? "Mostrar gráfico" : "Ocultar gráfico";
+  button.setAttribute("aria-expanded", String(!isCollapsed));
+}
+
+function toggleChartVisibility(panel, button, chartInstance) {
+  const isCollapsed = !panel.classList.contains("is-collapsed");
+  updateChartVisibility(panel, button, isCollapsed);
+
+  if (!isCollapsed && chartInstance) {
+    window.setTimeout(() => {
+      chartInstance.resize();
+      chartInstance.update("none");
+    }, 220);
+  }
+}
+
 function fillContext(result, element, isCurrent = false) {
   const first = result[0];
   const last = result[result.length - 1];
@@ -239,6 +268,8 @@ function formatCurrency(value) {
 }
 
 function fillPremises(payload) {
+  const boletosAdicionais = payload.qtd_boleto_nova - payload.qtd_boleto_atual;
+
   premiseBox.innerHTML = `
     <div class="premise-item">
       <span>Qtd atual de boletos</span>
@@ -250,7 +281,10 @@ function fillPremises(payload) {
     </div>
     <div class="premise-item">
       <span>Qtd nova de boletos</span>
-      <strong>${payload.qtd_boleto_nova.toLocaleString("pt-BR")}</strong>
+      <strong>
+        ${payload.qtd_boleto_nova.toLocaleString("pt-BR")}
+        <span class="premise-delta">(+ ${boletosAdicionais.toLocaleString("pt-BR")})</span>
+      </strong>
     </div>
     <div class="premise-item">
       <span>Invest Fácil extra</span>
@@ -358,6 +392,16 @@ async function runSimulation(event) {
 }
 
 form.addEventListener("submit", runSimulation);
+currentChartToggle.addEventListener("click", () => {
+  toggleChartVisibility(currentChartPanel, currentChartToggle, currentChart);
+});
+
+proposalChartToggle.addEventListener("click", () => {
+  toggleChartVisibility(proposalChartPanel, proposalChartToggle, proposalChart);
+});
+
 window.addEventListener("load", () => {
+  updateChartVisibility(currentChartPanel, currentChartToggle, false);
+  updateChartVisibility(proposalChartPanel, proposalChartToggle, true);
   form.requestSubmit();
 });
